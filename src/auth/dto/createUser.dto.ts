@@ -32,7 +32,7 @@ export class CreateUserDto {
     message: 'LastName must be between 2 and 20 characters long',
   })
   @Transform(({ value }) => value?.trim())
-  LastName: string;
+  lastName: string;
 
   @IsEmail({}, { message: 'Please Provide a valid email format' })
   @IsNotEmpty()
