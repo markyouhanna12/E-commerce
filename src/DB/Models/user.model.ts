@@ -115,7 +115,7 @@ UserSchema.pre('save', async function () {
   }
 });
 
-export type UserDocument = HydratedDocument<User>;
+export type HUserDocument = HydratedDocument<User>;
 
 export const UserModel = MongooseModule.forFeature([
   {

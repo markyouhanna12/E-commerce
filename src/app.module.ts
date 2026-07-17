@@ -7,6 +7,7 @@ import { Connection } from 'mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { resolve } from 'path';
 import { DatabaseModule } from './DB/database.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { DatabaseModule } from './DB/database.module';
     }),
     DatabaseModule,
     UserModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
