@@ -12,12 +12,15 @@ import { compare, hash } from 'src/Common/Security/hash.security';
 import { MailService } from 'src/mail/mail.service';
 import { customAlphabet } from 'nanoid';
 import { ConfirmEmailDto } from './dto/confirm-email.dto';
+import { LoginDto } from './dto/login.dto';
+import { TokenService } from 'src/Common/Tokens/token.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<HUserDocument>,
     private readonly mailService: MailService,
+    private readonly tokenService: TokenService,
   ) {}
 
   async register(createUserDto: CreateUserDto) {
@@ -87,5 +90,30 @@ export class AuthService {
         },
       },
     );
+  }
+
+  async login(loginDto: LoginDto) {
+    const { email, password, FCM } = loginDto;
+
+    const user = await this.userModel.findOne({
+      email,
+      confirmEmail: { $exists: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found or email not confirmed');
+    }
+    const isMatched = await compare(password, user.password);
+
+    if (!isMatched) {
+      throw new BadRequestException('Invalid password');
+    }
+
+    const tokens = this.tokenService.generateTokens(user);
+
+    return {
+      message: 'Login Successful',
+      tokens,
+    };
   }
 }
