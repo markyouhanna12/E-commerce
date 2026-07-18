@@ -1,8 +1,41 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { HUserDocument, User } from 'src/DB/Models/user.model';
 
 @Injectable()
 export class UserService {
-  health() {
-    throw new BadRequestException('bad request from health');
+  constructor(
+    @InjectModel(User.name)
+    private readonly userModel: Model<HUserDocument>,
+  ) {}
+
+  async getProfile(user: HUserDocument) {
+    const profile = await this.userModel
+      .findById(user._id)
+      .select('-password -__v');
+
+    if (!profile) {
+      throw new NotFoundException('User not found');
+    }
+
+    return {
+      message: 'Profile retrieved successfully',
+      data: profile,
+    };
+  }
+
+  async findAll() {
+    const users = await this.userModel.find().select('-password -__v');
+
+    return {
+      message: 'Users retrieved successfully',
+      results: users.length,
+      data: users,
+    };
   }
 }

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
 import { HUserDocument } from 'src/DB/Models/user.model';
 
 @Injectable()
@@ -43,8 +44,8 @@ export class TokenService {
     };
   }
 
-  verifyAccessToken(token: string) {
-    return this.jwtService.verify(token, {
+  verifyAccessToken(token: string): JwtPayload {
+    return this.jwtService.verify<JwtPayload>(token, {
       secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
     });
   }
@@ -53,5 +54,9 @@ export class TokenService {
     return this.jwtService.verify(token, {
       secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
     });
+  }
+
+  decodeToken(token: string): JwtPayload | null {
+    return this.jwtService.decode(token) as JwtPayload | null;
   }
 }
