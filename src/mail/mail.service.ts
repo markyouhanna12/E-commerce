@@ -11,7 +11,7 @@ export class MailService {
       await this.mailerService.sendMail({
         to: email,
         subject: 'Your activation Code',
-        template: './otp',
+        template: './otp.ejs',
         context: { confirmEmailOTP: otp },
       });
       this.logger.log(`Verfication code successfully sent to : ${email}`);

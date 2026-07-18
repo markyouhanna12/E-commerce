@@ -32,6 +32,7 @@
     "class-validator": "^0.15.1",
     "ejs": "^6.0.1",
     "mongoose": "^9.7.4",
+    "nanoid": "^6.0.0",
     "nodemailer": "^9.0.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"

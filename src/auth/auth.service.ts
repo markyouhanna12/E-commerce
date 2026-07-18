@@ -4,11 +4,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { HUserDocument, User } from 'src/DB/Models/user.model';
 import { Model } from 'mongoose';
 import { hash } from 'src/Common/Security/hash.security';
+import { MailService } from 'src/mail/mail.service';
+import { customAlphabet } from 'nanoid';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<HUserDocument>,
+    private readonly mailService: MailService,
   ) {}
 
   async register(createUserDto: CreateUserDto) {
@@ -22,13 +25,22 @@ export class AuthService {
       );
     }
 
-    const hashedPassword = await hash(createUserDto.password);
+    const otp = customAlphabet('0123456789', 6)();
+    console.log(otp);
+
+    const hashedOTP = await hash(otp);
+
+    const expireTime = new Date();
+    expireTime.setMinutes(expireTime.getMinutes() + 5); // 5 mins
 
     const newUser = new this.userModel({
       ...createUserDto,
-      password: hashedPassword,
+      confirmEmailOTP: hashedOTP,
+      otpExpiresAt: expireTime,
     });
     const savedUser = await newUser.save();
+
+    this.mailService.sendVerificationOtp(savedUser.email, otp);
 
     return savedUser;
   }
