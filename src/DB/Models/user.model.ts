@@ -26,7 +26,7 @@ export class User {
     minLength: [3, 'First name must be at least 3 characters long'],
     maxLength: [20, 'First name must be at most 50 characters long'],
   })
-  firstName: string;
+  firstName!: string;
 
   @Prop({
     type: String,
@@ -35,14 +35,14 @@ export class User {
     minLength: [3, 'Last name must be at least 3 characters long'],
     maxLength: [20, 'Last name must be at most 50 characters long'],
   })
-  lastName: string;
+  lastName!: string;
 
   @Prop({
     required: true,
     unique: true,
     lowercase: true,
   })
-  email: string;
+  email!: string;
 
   @Prop({
     type: String,
@@ -50,26 +50,26 @@ export class User {
       return this.provider === ProviderEnum.GOOGLE ? false : true;
     },
   })
-  password: string;
+  password!: string;
 
   @Prop({
     type: String,
     enum: RoleEnum,
     default: RoleEnum.USER,
   })
-  role: RoleEnum;
+  role!: RoleEnum;
 
   @Prop({
     type: String,
     required: true,
     unique: true,
   })
-  phoneNumber: string;
+  phoneNumber!: string;
 
   @Prop({
     type: Date,
   })
-  confirmEmail: Date;
+  confirmEmail!: Date;
 
   @Prop({
     type: String,
@@ -87,7 +87,7 @@ export class User {
     enum: GenderEnum,
     default: GenderEnum.MALE,
   })
-  gender: GenderEnum;
+  gender!: GenderEnum;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -24,7 +24,7 @@ export class CreateUserDto {
     message: 'FirstName must be between 2 and 20 characters long',
   })
   @Transform(({ value }) => value?.trim())
-  firstName: string;
+  firstName!: string;
 
   @IsString()
   @IsNotEmpty()
@@ -32,41 +32,41 @@ export class CreateUserDto {
     message: 'LastName must be between 2 and 20 characters long',
   })
   @Transform(({ value }) => value?.trim())
-  lastName: string;
+  lastName!: string;
 
   @IsEmail({}, { message: 'Please Provide a valid email format' })
   @IsNotEmpty()
   @Transform(({ value }) => value?.toLowerCase().trim())
-  email: string;
+  email!: string;
 
   @IsString()
   @IsNotEmpty()
   @IsStrongPassword()
   @Length(8, 50, { message: 'Password must be at least 8 characters long' })
   @ValidateIf((dto: CreateUserDto) => dto.provider !== ProviderEnum.GOOGLE)
-  password: string;
+  password!: string;
 
   @IsString()
   @IsEnum(GenderEnum, { message: 'Gender value is not valid gender Selection' })
   @IsOptional()
-  gender: string;
+  gender!: string;
 
   @IsString()
   @IsEnum(ProviderEnum, {
     message: 'Provider value is not valid Provider Selection',
   })
   @IsOptional()
-  provider: string;
+  provider!: string;
 
   @IsString()
   @IsEnum(RoleEnum, {
     message: 'Role value is not valid Role Selection',
   })
   @IsOptional()
-  role: string;
+  role!: string;
 
   @IsPhoneNumber('EG', { message: 'please Enter a valid phone Number' })
   @IsNotEmpty()
   @IsString()
-  phoneNumber: string;
+  phoneNumber!: string;
 }
