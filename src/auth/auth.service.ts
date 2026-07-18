@@ -77,10 +77,15 @@ export class AuthService {
       );
     }
 
-    user.confirmEmail = new Date();
-    user.confirmEmailOTP = undefined;
-    user.otpExpiresAt = undefined;
-
-    await user.save();
+    await this.userModel.updateOne(
+      { _id: user._id },
+      {
+        confirmEmail: new Date(),
+        $unset: {
+          confirmEmailOTP: 1,
+          otpExpiresAt: 1,
+        },
+      },
+    );
   }
 }
