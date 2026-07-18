@@ -51,7 +51,12 @@ export class AuthService {
 
     this.mailService.sendVerificationOtp(savedUser.email, otp);
 
-    return savedUser;
+    return {
+      success: true,
+      message:
+        'registration successful. Please check your inbox for verification code ',
+      user: savedUser,
+    };
   }
 
   async confirmEmail(confirmEmailDto: ConfirmEmailDto) {
@@ -90,6 +95,11 @@ export class AuthService {
         },
       },
     );
+
+    return {
+      success: true,
+      message: 'Email verified successfully.',
+    };
   }
 
   async login(loginDto: LoginDto) {

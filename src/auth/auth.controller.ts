@@ -10,23 +10,12 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto) {
-    const user = await this.authService.register(createUserDto);
-
-    return {
-      success: true,
-      message:
-        'registration successful. Please check your inbox for verification code ',
-      user: user,
-    };
+    return await this.authService.register(createUserDto);
   }
 
   @Post('confirm-email')
   async confirmEmail(@Body() confirmEmailDto: ConfirmEmailDto) {
-    await this.authService.confirmEmail(confirmEmailDto);
-    return {
-      success: true,
-      message: 'Email verified successfully.',
-    };
+    return await this.authService.confirmEmail(confirmEmailDto);
   }
 
   @Post('login')
