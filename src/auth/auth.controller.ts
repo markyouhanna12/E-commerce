@@ -1,6 +1,7 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/createUser.dto';
+import { ConfirmEmailDto } from './dto/confirm-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -15,6 +16,15 @@ export class AuthController {
       message:
         'registration successful. Please check your inbox for verification code ',
       user: user,
+    };
+  }
+
+  @Post('confirm-email')
+  async confirmEmail(@Body() confirmEmailDto: ConfirmEmailDto) {
+    await this.authService.confirmEmail(confirmEmailDto);
+    return {
+      success: true,
+      message: 'Email verified successfully.',
     };
   }
 }

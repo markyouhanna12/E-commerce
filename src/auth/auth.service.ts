@@ -1,11 +1,17 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { HUserDocument, User } from 'src/DB/Models/user.model';
 import { Model } from 'mongoose';
-import { hash } from 'src/Common/Security/hash.security';
+import { compare, hash } from 'src/Common/Security/hash.security';
 import { MailService } from 'src/mail/mail.service';
 import { customAlphabet } from 'nanoid';
+import { ConfirmEmailDto } from './dto/confirm-email.dto';
 
 @Injectable()
 export class AuthService {
@@ -43,5 +49,38 @@ export class AuthService {
     this.mailService.sendVerificationOtp(savedUser.email, otp);
 
     return savedUser;
+  }
+
+  async confirmEmail(confirmEmailDto: ConfirmEmailDto) {
+    const user = await this.userModel.findOne({
+      email: confirmEmailDto.email,
+    });
+    if (!user) {
+      throw new NotFoundException(
+        'No Account record matches this email address',
+      );
+    }
+    if (user.confirmEmail) {
+      throw new BadRequestException('This email account has been confirmed');
+    }
+    if (
+      !user.confirmEmailOTP ||
+      !(await compare(confirmEmailDto.confirmEmailOTP, user.confirmEmailOTP))
+    ) {
+      throw new BadRequestException(
+        'The verfication code is provided incorrect',
+      );
+    }
+    if (new Date() > user.otpExpiresAt!) {
+      throw new BadRequestException(
+        'The verfication code has expired. Please sign up again',
+      );
+    }
+
+    user.confirmEmail = new Date();
+    user.confirmEmailOTP = undefined;
+    user.otpExpiresAt = undefined;
+
+    await user.save();
   }
 }
