@@ -14,6 +14,7 @@ import { customAlphabet } from 'nanoid';
 import { ConfirmEmailDto } from './dto/confirm-email.dto';
 import { LoginDto } from './dto/login.dto';
 import { TokenService } from 'src/Common/Tokens/token.service';
+import { EncryptionService } from 'src/Common/Encryption/encryption.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,7 @@ export class AuthService {
     @InjectModel(User.name) private readonly userModel: Model<HUserDocument>,
     private readonly mailService: MailService,
     private readonly tokenService: TokenService,
+    private readonly encryptionService: EncryptionService,
   ) {}
 
   async register(createUserDto: CreateUserDto) {
@@ -42,10 +44,15 @@ export class AuthService {
     const expireTime = new Date();
     expireTime.setMinutes(expireTime.getMinutes() + 5); // 5 mins
 
+    const encryptedPhone = this.encryptionService.encrypt(
+      createUserDto.phoneNumber,
+    );
+
     const newUser = new this.userModel({
       ...createUserDto,
       confirmEmailOTP: hashedOTP,
       otpExpiresAt: expireTime,
+      phoneNumber: encryptedPhone,
     });
     const savedUser = await newUser.save();
 
