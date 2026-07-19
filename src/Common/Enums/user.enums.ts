@@ -12,3 +12,8 @@ export enum ProviderEnum {
   GOOGLE = 'GOOGLE',
   SYSTEM = 'SYSTEM',
 }
+
+export enum AuthorizationType {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+}
