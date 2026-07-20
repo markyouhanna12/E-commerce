@@ -2,10 +2,12 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './Common/Filters/all-exceptions.filter';
 import { ValidationPipe } from '@nestjs/common';
+import { LoggingIntercepotor } from './Common/Interceptors/logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalInterceptors(new LoggingIntercepotor());
 
   app.useGlobalPipes(
     new ValidationPipe({

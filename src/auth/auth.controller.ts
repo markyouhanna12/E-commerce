@@ -20,7 +20,6 @@ export class AuthController {
   }
 
   @Post('login')
-  @UseInterceptors(LoggingIntercepotor)
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
