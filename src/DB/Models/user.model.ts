@@ -88,6 +88,11 @@ export class User {
     default: GenderEnum.MALE,
   })
   gender!: GenderEnum;
+
+  @Prop({
+    type: String,
+  })
+  ProfilePic!: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

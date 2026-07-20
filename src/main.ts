@@ -3,11 +3,13 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './Common/Filters/all-exceptions.filter';
 import { ValidationPipe } from '@nestjs/common';
 import { LoggingIntercepotor } from './Common/Interceptors/logging.interceptor';
-
+import * as express from 'express';
+import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new LoggingIntercepotor());
+  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
 
   app.useGlobalPipes(
     new ValidationPipe({

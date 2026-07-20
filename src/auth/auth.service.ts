@@ -133,4 +133,23 @@ export class AuthService {
       tokens,
     };
   }
+
+  async updateProfilePic(filePath: string, userId: string) {
+    const publicUrl = `http://localhost:3000/${filePath.replace(/\\/g, '/')}`;
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      userId,
+      {
+        ProfilePic: publicUrl,
+      },
+      { new: true },
+    );
+    if (!updatedUser) {
+      throw new NotFoundException('User Account Not Found');
+    }
+    return {
+      success: true,
+      message: 'Profile Picture updated successfully',
+      user: updatedUser,
+    };
+  }
 }
