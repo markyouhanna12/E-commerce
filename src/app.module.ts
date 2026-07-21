@@ -12,6 +12,7 @@ import { MailModule } from './mail/mail.module';
 import { LoggerMiddleware } from './Common/Middlewares/logger.middleware';
 import { AuthController } from './auth/auth.controller';
 import { CategoryModule } from './category/category.module';
+import { BrandModule } from './brand/brand.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CategoryModule } from './category/category.module';
     AuthModule,
     MailModule,
     CategoryModule,
+    BrandModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -18,11 +18,18 @@ export class CategoryService {
 
   async create(dto: CreateCategoryDto, logoUrl: string, adminId: string) {
     const category = await this.categoryModel.findOne({
-      name: CreateCategoryDto.name,
+      name: dto.name,
     });
-    if (category) {
+    if (category && !category.isDeleted) {
       throw new ConflictException('Category already exists');
     }
+
+    if (category && category.isDeleted) {
+      throw new ConflictException(
+        'A deleted category with this name already exists. Restore it instead.',
+      );
+    }
+
     const newCategory = await this.categoryModel.create({
       ...dto,
       logo: logoUrl,
@@ -59,18 +66,55 @@ export class CategoryService {
 
   async findAll() {
     return this.categoryModel
-      .find()
+      .find({
+        isDeleted: false,
+      })
       .populate('createdBy', 'firstName lastName email');
   }
 
   async findById(id: string) {
     const category = await this.categoryModel
-      .findById(id)
+      .findOne({
+        _id: id,
+        isDeleted: false,
+      })
       .populate('createdBy');
 
     if (!category) {
       throw new NotFoundException('Category Not Found');
     }
     return category;
+  }
+
+  async delete(id: string) {
+    const category = await this.categoryModel.findById(id);
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+    if (category.isDeleted) {
+      throw new ConflictException('Category is already deleted');
+    }
+    category.isDeleted = true;
+    await category.save();
+
+    return { message: 'Category deleted successfully' };
+  }
+
+  async restore(id: string) {
+    const category = await this.categoryModel.findById(id);
+
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+
+    if (!category.isDeleted) {
+      throw new ConflictException('Category is already active');
+    }
+
+    category.isDeleted = false;
+    await category.save();
+    return {
+      message: 'Category restored successfully',
+    };
   }
 }

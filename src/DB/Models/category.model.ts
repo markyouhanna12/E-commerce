@@ -37,6 +37,12 @@ export class Category {
     ref: 'User',
   })
   createdBy!: string;
+
+  @Prop({
+    type: Boolean,
+    default: false,
+  })
+  isDeleted!: boolean;
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
