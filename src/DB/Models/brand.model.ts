@@ -44,6 +44,18 @@ export class Brand {
     ref: 'Category',
   })
   categories!: string[];
+
+  @Prop({
+    type: Boolean,
+    default: false,
+  })
+  isDeleted!: boolean;
+
+  @Prop({
+    type: mongoose.Types.ObjectId,
+    ref: 'User',
+  })
+  deletedBy?: string;
 }
 
 export const BrandSchema = SchemaFactory.createForClass(Brand);
