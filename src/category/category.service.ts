@@ -20,11 +20,11 @@ export class CategoryService {
     const category = await this.categoryModel.findOne({
       name: dto.name,
     });
-    if (category && !category.isDeleted) {
+    if (category && !category.isDeleted && !category.deletedBy) {
       throw new ConflictException('Category already exists');
     }
 
-    if (category && category.isDeleted) {
+    if (category && category.isDeleted && category.deletedBy) {
       throw new ConflictException(
         'A deleted category with this name already exists. Restore it instead.',
       );
@@ -68,6 +68,7 @@ export class CategoryService {
     return this.categoryModel
       .find({
         isDeleted: false,
+        deletedBy: { $exists: false },
       })
       .populate('createdBy', 'firstName lastName email');
   }
@@ -77,6 +78,7 @@ export class CategoryService {
       .findOne({
         _id: id,
         isDeleted: false,
+        deletedBy: { $exists: false },
       })
       .populate('createdBy');
 
@@ -86,7 +88,7 @@ export class CategoryService {
     return category;
   }
 
-  async delete(id: string) {
+  async delete(id: string, adminId: string) {
     const category = await this.categoryModel.findById(id);
     if (!category) {
       throw new NotFoundException('Category not found');
@@ -95,13 +97,16 @@ export class CategoryService {
       throw new ConflictException('Category is already deleted');
     }
     category.isDeleted = true;
+    category.deletedBy = adminId;
     await category.save();
 
     return { message: 'Category deleted successfully' };
   }
 
   async restore(id: string) {
-    const category = await this.categoryModel.findById(id);
+    const category = await this.categoryModel.findByIdAndUpdate(id, {
+      $unset: { deletedBy: true },
+    });
 
     if (!category) {
       throw new NotFoundException('Category not found');

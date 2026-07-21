@@ -43,6 +43,12 @@ export class Category {
     default: false,
   })
   isDeleted!: boolean;
+
+  @Prop({
+    type: mongoose.Types.ObjectId,
+    ref: 'User',
+  })
+  deletedBy?: string;
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);

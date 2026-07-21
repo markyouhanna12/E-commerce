@@ -73,8 +73,9 @@ export class CategoryController {
   @Delete(':id')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(RoleEnum.ADMIN)
-  async delete(@Param('id') id: string) {
-    return this.categoryService.delete(id);
+  async delete(@Param('id') categoryId: string, @Req() req: any) {
+    const adminId = req.user._id;
+    return this.categoryService.delete(categoryId, adminId);
   }
 
   @Patch(':id/restore')
