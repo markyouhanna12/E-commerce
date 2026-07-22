@@ -4,12 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Model } from 'mongoose';
+import { Model, QueryFilter } from 'mongoose';
 import { Brand, HBrandDocument } from 'src/DB/Models/brand.model';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { UpdateBrandDto } from './dto/update-brand.dto';
 import { Category, HCategoryDocument } from 'src/DB/Models/category.model';
+import { QueryBrandDto } from './dto/query-brand.dto';
 
 @Injectable()
 export class BrandService {
@@ -97,14 +98,59 @@ export class BrandService {
     };
   }
 
-  async findAll() {
-    return this.brandModel
-      .find({
-        isDeleted: false,
-        deletedBy: { $exists: false },
-      })
-      .populate('createdBy', 'firstName lastName email')
-      .populate('categories', 'name');
+  async findAll(query: QueryBrandDto) {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const filter: QueryFilter<HBrandDocument> = {
+      isDeleted: false,
+    };
+    if (query.search) {
+      filter.name = {
+        $regex: query.search.trim(),
+        $options: 'i',
+      };
+    }
+    if (query.category) {
+      filter.categories = query.category;
+    }
+
+    const allowedSortFields = [
+      'name',
+      '-name',
+      'createdAt',
+      '-createdAt',
+      'updatedAt',
+      '-updatedAt',
+    ];
+
+    const sort = allowedSortFields.includes(query.sort || '')
+      ? query.sort
+      : '-createdAt';
+
+    const [brands, total] = await Promise.all([
+      this.brandModel
+        .find(filter)
+        .populate('categories', 'name')
+        .populate('createdBy', 'firstName lastName email')
+        .sort(sort)
+        .skip(skip)
+        .limit(limit),
+
+      this.brandModel.countDocuments(filter),
+    ]);
+
+    return {
+      success: true,
+      page,
+      limit,
+      totalItems: total,
+      totalPages: Math.ceil(total / limit),
+      hasNextPage: page < Math.ceil(total / limit),
+      hasPreviousPage: page > 1,
+      brands,
+    };
   }
 
   async findById(id: string) {

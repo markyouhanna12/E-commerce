@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseGuards,
@@ -21,14 +22,17 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { RoleEnum } from 'src/Common/Enums/user.enums';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UpdateBrandDto } from './dto/update-brand.dto';
+import { QueryBrandDto } from './dto/query-brand.dto';
 
 @Controller('brand')
 export class BrandController {
   constructor(private readonly brandService: BrandService) {}
 
   @Get()
-  async findAll() {
-    return this.brandService.findAll();
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  async findAll(@Query() query: QueryBrandDto) {
+    return await this.brandService.findAll(query);
   }
 
   @Get(':id')
