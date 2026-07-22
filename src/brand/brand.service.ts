@@ -20,34 +20,42 @@ export class BrandService {
     private readonly categoryModel: Model<HCategoryDocument>,
   ) {}
 
-  private async validateCategoriesExists(categoriesIds: string[]) {
-    if (categoriesIds && categoriesIds.length == 0) {
+  private async validateCategoriesExist(categoryIds: string[]): Promise<void> {
+    if (!categoryIds?.length) {
       return;
     }
-    const existingCategories = await this.categoryModel.countDocuments({
-      _id: { $in: categoriesIds },
+    const count = await this.categoryModel.countDocuments({
+      _id: { $in: categoryIds },
+      isDeleted: false,
     });
-    if (existingCategories !== categoriesIds.length) {
-      throw new BadRequestException(
-        'One or more assigned categories IDs not exists in database',
-      );
+    if (count !== categoryIds.length) {
+      throw new BadRequestException('One or more category IDs do not exist.');
     }
+  }
+  private async findBrandOrFail(id: string): Promise<HBrandDocument> {
+    const brand = await this.brandModel.findById(id);
+    if (!brand) {
+      throw new NotFoundException('Brand not found.');
+    }
+    return brand;
+  }
+
+  private async findActiveBrandByName(
+    name: string,
+  ): Promise<HBrandDocument | null> {
+    return this.brandModel.findOne({
+      name: name.trim(),
+      isDeleted: false,
+    });
   }
 
   async create(dto: CreateBrandDto, logoUrl: string, adminId: string) {
-    await this.validateCategoriesExists(dto.categories);
+    await this.validateCategoriesExist(dto.categories);
 
-    const brand = await this.brandModel.findOne({
-      name: dto.name,
-    });
-    if (brand && !brand.isDeleted && !brand.deletedBy) {
-      throw new ConflictException('Brand already exists');
-    }
+    const existing = await this.findActiveBrandByName(dto.name);
 
-    if (brand && brand.isDeleted && brand.deletedBy) {
-      throw new ConflictException(
-        'A deleted brand with this name already exists. Restore it instead.',
-      );
+    if (existing) {
+      throw new ConflictException('the Brand is already Exists');
     }
 
     const newBrand = await this.brandModel.create({
@@ -56,26 +64,25 @@ export class BrandService {
       createdBy: adminId,
     });
 
-    return newBrand.save();
+    return {
+      message: 'Brand created successfully.',
+      newBrand,
+    };
   }
 
-  async update(
-    dto: UpdateBrandDto,
-    id: string,
-    logoUrl?: string | undefined,
-  ): Promise<Brand> {
+  async update(dto: UpdateBrandDto, id: string, logoUrl?: string | undefined) {
+    const brand = await this.findBrandOrFail(id);
     if (dto.categories) {
-      await this.validateCategoriesExists(dto.categories);
-    }
-    const brand = await this.brandModel.findById(id);
-
-    if (!brand) {
-      throw new NotFoundException('Brand not found');
+      await this.validateCategoriesExist(dto.categories);
     }
 
     // Update only the provided fields
     if (dto.name !== undefined) {
       brand.name = dto.name;
+    }
+
+    if (dto.categories !== undefined) {
+      brand.categories = dto.categories;
     }
 
     if (logoUrl) {
@@ -84,7 +91,10 @@ export class BrandService {
 
     await brand.save();
 
-    return brand;
+    return {
+      message: 'Brand updated successfully.',
+      brand,
+    };
   }
 
   async findAll() {
@@ -93,7 +103,8 @@ export class BrandService {
         isDeleted: false,
         deletedBy: { $exists: false },
       })
-      .populate('createdBy', 'firstName lastName email');
+      .populate('createdBy', 'firstName lastName email')
+      .populate('categories', 'name');
   }
 
   async findById(id: string) {
@@ -103,7 +114,8 @@ export class BrandService {
         isDeleted: false,
         deletedBy: { $exists: false },
       })
-      .populate('createdBy');
+      .populate('createdBy')
+      .populate('categories', 'name');
 
     if (!brand) {
       throw new NotFoundException('Brand Not Found');
@@ -112,15 +124,15 @@ export class BrandService {
   }
 
   async delete(id: string, adminId: string) {
-    const brand = await this.brandModel.findById(id);
-    if (!brand) {
-      throw new NotFoundException('Brand not found');
-    }
+    const brand = await this.findBrandOrFail(id);
+
     if (brand.isDeleted) {
       throw new ConflictException('Brand is already deleted');
     }
+
     brand.isDeleted = true;
     brand.deletedBy = adminId;
+
     await brand.save();
 
     return { message: 'Brand deleted successfully' };
@@ -143,6 +155,7 @@ export class BrandService {
     await brand.save();
     return {
       message: 'Brand restored successfully',
+      brand,
     };
   }
 }

@@ -39,9 +39,14 @@ export class Brand {
   createdBy!: string;
 
   @Prop({
-    type: mongoose.Types.ObjectId,
+    type: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
+      },
+    ],
     required: true,
-    ref: 'Category',
+    default: [],
   })
   categories!: string[];
 
@@ -52,7 +57,7 @@ export class Brand {
   isDeleted!: boolean;
 
   @Prop({
-    type: mongoose.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   })
   deletedBy?: string;
@@ -61,6 +66,12 @@ export class Brand {
 export const BrandSchema = SchemaFactory.createForClass(Brand);
 
 export type HBrandDocument = HydratedDocument<Brand>;
+
+BrandSchema.index({ name: 1 });
+
+BrandSchema.index({ categories: 1 });
+
+BrandSchema.index({ isDeleted: 1 });
 
 export const BrandModel = MongooseModule.forFeature([
   {

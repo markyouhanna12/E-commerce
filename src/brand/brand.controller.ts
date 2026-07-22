@@ -37,7 +37,8 @@ export class BrandController {
   }
 
   @Post()
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.ADMIN)
   @UseInterceptors(FileInterceptor('file', multerOptions))
   async create(
     @UploadedFile() file: Express.Multer.File,
