@@ -66,10 +66,28 @@ export class Product {
 
   @Prop({
     type: mongoose.Types.ObjectId,
-    required: true,
     ref: 'Brand',
   })
   brand!: string;
+
+  @Prop({
+    type: Boolean,
+    default: false,
+  })
+  isDeleted!: boolean;
+
+  @Prop({
+    type: Date,
+    default: null,
+  })
+  deletedAt?: Date | null;
+
+  @Prop({
+    type: mongoose.Types.ObjectId,
+    ref: 'User',
+    default: null,
+  })
+  deletedBy?: string | null;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

@@ -13,6 +13,7 @@ import { LoggerMiddleware } from './Common/Middlewares/logger.middleware';
 import { AuthController } from './auth/auth.controller';
 import { CategoryModule } from './category/category.module';
 import { BrandModule } from './brand/brand.module';
+import { ProductsModule } from './products/products.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { BrandModule } from './brand/brand.module';
     MailModule,
     CategoryModule,
     BrandModule,
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
