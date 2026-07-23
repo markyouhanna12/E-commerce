@@ -22,11 +22,6 @@ export class CreateProductDto {
   })
   name!: string;
 
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsString({ each: true })
-  images!: string[];
-
   @IsNumber()
   @IsNotEmpty({ message: 'Product Price is required. ' })
   @IsPositive({ message: 'Product price must be a positive number.' })

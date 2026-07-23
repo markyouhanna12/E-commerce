@@ -152,7 +152,7 @@ export class ProductsService {
     if (search) {
       filter.name = {
         $regex: search,
-        options: 'i',
+        $options: 'i',
       };
     }
     if (category) {
