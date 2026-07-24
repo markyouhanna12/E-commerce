@@ -110,9 +110,9 @@ export const CouponSchema = SchemaFactory.createForClass(Coupon);
 
 export type HCouponDocument = HydratedDocument<Coupon>;
 
-export const CartModel = MongooseModule.forFeature([
+export const CouponModel = MongooseModule.forFeature([
   {
-    name: 'Cart',
+    name: 'Coupon',
     schema: CouponSchema,
   },
 ]);
