@@ -23,7 +23,9 @@ export class CartService {
       item.SubTotal = item.quantity * item.pricePerUnit;
       total += item.SubTotal;
     }
-    cart.totalPrice = total;
+    cart.subTotal = total;
+
+    cart.totalPrice = total - (cart.discount || 0);
   }
 
   async getCart(userId: string) {
@@ -34,7 +36,10 @@ export class CartService {
       cart = new this.cartModel({
         user: userId,
         items: [],
+        subTotal: 0,
+        discount: 0,
         totalPrice: 0,
+        coupon: null,
       });
     }
     return cart;
@@ -54,7 +59,10 @@ export class CartService {
       cart = new this.cartModel({
         user: userId,
         items: [],
+        subTotal: 0,
+        discount: 0,
         totalPrice: 0,
+        coupon: null,
       });
     }
 
@@ -76,7 +84,7 @@ export class CartService {
         SubTotal: quantity * product.price,
       });
     }
-    this.reCalculateCartTotal(cart);
+    await this.reCalculateCartTotal(cart);
     return (await cart.save()).populate('items.product');
   }
 

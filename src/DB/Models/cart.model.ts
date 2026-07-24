@@ -1,5 +1,5 @@
 import { MongooseModule, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument } from 'mongoose';
+import mongoose, { HydratedDocument, Types } from 'mongoose';
 
 @Schema({ _id: false })
 export class CartItem {
@@ -49,6 +49,25 @@ export class Cart {
     default: [],
   })
   items!: CartItem[];
+
+  @Prop({
+    type: Number,
+    default: 0,
+  })
+  subTotal!: number;
+
+  @Prop({
+    type: Number,
+    default: 0,
+  })
+  discount!: number;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Coupon',
+    default: null,
+  })
+  coupon?: Types.ObjectId | null;
 
   @Prop({
     type: Number,

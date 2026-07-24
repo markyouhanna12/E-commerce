@@ -49,7 +49,7 @@ export class CouponsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(RoleEnum.ADMIN)
   async update(
-    @Param('id') couponId: string,
+    @Param('couponId') couponId: string,
     @Body() updateCouponDto: UpdateCouponDto,
   ) {
     return await this.couponsService.update(couponId, updateCouponDto);
@@ -65,7 +65,7 @@ export class CouponsController {
   @Patch(':couponId/restore')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(RoleEnum.ADMIN)
-  async restore(@Param('id') couponId: string) {
+  async restore(@Param('couponId') couponId: string) {
     return await this.couponsService.restore(couponId);
   }
 
@@ -84,7 +84,7 @@ export class CouponsController {
     return await this.couponsService.applyCoupon(userId, applyCouponDto);
   }
 
-  @Delete('remove')
+  @Delete('remove-coupon/cart')
   @UseGuards(AuthGuard)
   async removeCoupon(@Req() req: any) {
     const userId = req.user._id;
