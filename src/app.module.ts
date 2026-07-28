@@ -18,6 +18,7 @@ import { CartModule } from './cart/cart.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { CacheModule } from './cache/cache.module';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { CacheModule } from './cache/cache.module';
     ReviewsModule,
     CouponsModule,
     CacheModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
