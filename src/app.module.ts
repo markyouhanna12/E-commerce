@@ -17,6 +17,7 @@ import { ProductsModule } from './products/products.module';
 import { CartModule } from './cart/cart.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { CouponsModule } from './coupons/coupons.module';
+import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { CouponsModule } from './coupons/coupons.module';
     CartModule,
     ReviewsModule,
     CouponsModule,
+    CacheModule,
   ],
   controllers: [AppController],
   providers: [AppService],
