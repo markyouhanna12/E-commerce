@@ -6,7 +6,7 @@ import {
 import { CreateOrderDto } from './dto/create-order.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { HOrderDocument, Order } from 'src/DB/Models/order.model';
-import { Model } from 'mongoose';
+import { Model, QueryFilter, Types } from 'mongoose';
 import { Cart, HCartDocument } from 'src/DB/Models/cart.model';
 import { HProductDocument, Product } from 'src/DB/Models/products.model';
 import {
@@ -15,6 +15,7 @@ import {
   HCouponDocument,
 } from 'src/DB/Models/coupon.model';
 import { OrderStatusEnum } from 'src/Common/Enums/order.enums';
+import { GetMyOrdersDto } from './dto/get-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -117,6 +118,45 @@ export class OrdersService {
       message: 'Checkout successful',
       status: 200,
       order: order,
+    };
+  }
+
+  async getMyOrders(userId: string, dto: GetMyOrdersDto) {
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 10;
+
+    const skip = (page - 1) * limit;
+
+    const filter: QueryFilter<Order> = {
+      user: new Types.ObjectId(userId),
+    };
+
+    if (dto.status) {
+      filter.status = dto.status;
+    }
+
+    const [orders, total] = await Promise.all([
+      this.orderModel
+        .find(filter)
+        .populate('items.product')
+        .populate('appliedCoupon')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+
+      this.orderModel.countDocuments(filter),
+    ]);
+
+    return {
+      message: 'Orders fetched successfully',
+      status: 200,
+      orders,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 }
