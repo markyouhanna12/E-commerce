@@ -185,4 +185,63 @@ export class OrdersService {
       order,
     };
   }
+
+  async cancelOrder(userId: string, orderId: string) {
+    if (!Types.ObjectId.isValid(orderId)) {
+      throw new BadRequestException('Invalid order ID');
+    }
+
+    const order = await this.orderModel.findOne({
+      _id: new Types.ObjectId(orderId),
+      user: new Types.ObjectId(userId),
+    });
+
+    if (!order) {
+      throw new NotFoundException(
+        'Order not found or you do not have access to this order',
+      );
+    }
+
+    if (order.status === OrderStatusEnum.CANCELLED) {
+      throw new BadRequestException('Order is already cancelled');
+    }
+
+    if (
+      order.status !== OrderStatusEnum.PENDING &&
+      order.status !== OrderStatusEnum.PAID
+    ) {
+      throw new BadRequestException(
+        `Order cannot be cancelled because its current status is ${order.status}`,
+      );
+    }
+
+    for (const item of order.items) {
+      await this.productModel.findByIdAndUpdate(item.product, {
+        $inc: {
+          stock: item.quantity,
+        },
+      });
+    }
+
+    if (order.appliedCoupon) {
+      await this.couponModel.findByIdAndUpdate(order.appliedCoupon, {
+        $inc: {
+          usedCount: -1,
+        },
+        $pull: {
+          usedBy: new Types.ObjectId(userId),
+        },
+      });
+    }
+
+    order.status = OrderStatusEnum.CANCELLED;
+
+    await order.save();
+
+    return {
+      message: 'Order cancelled successfully',
+      status: 200,
+      order,
+    };
+  }
 }

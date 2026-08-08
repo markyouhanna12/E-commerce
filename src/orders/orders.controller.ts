@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -45,5 +46,14 @@ export class OrdersController {
     const userId = req.user.id;
 
     return this.ordersService.getMyOrder(userId, orderId);
+  }
+
+  @Patch(':orderId/cancel')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.USER)
+  async cancelOrder(@Req() req: any, @Param('orderId') orderId: string) {
+    const userId = req.user.id;
+
+    return this.ordersService.cancelOrder(userId, orderId);
   }
 }
