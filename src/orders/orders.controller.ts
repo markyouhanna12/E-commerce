@@ -18,6 +18,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CurrentUser } from 'src/auth/decorators/user.decorator';
 import { HUserDocument } from 'src/DB/Models/user.model';
 import { GetAdminOrdersDto, GetMyOrdersDto } from './dto/get-order.dto';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -55,6 +56,16 @@ export class OrdersController {
   @Roles(RoleEnum.ADMIN)
   async getAdminOrder(@Param('orderId') orderId: string) {
     return this.ordersService.getAdminOrder(orderId);
+  }
+
+  @Patch('admin/:orderId/status')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  async updateOrderStatus(
+    @Param('orderId') orderId: string,
+    @Body() dto: UpdateOrderStatusDto,
+  ) {
+    return this.ordersService.updateOrderStatus(orderId, dto);
   }
 
   // ==================== CUSTOMER ORDER ACTIONS ====================

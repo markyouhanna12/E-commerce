@@ -16,6 +16,7 @@ import {
 } from 'src/DB/Models/coupon.model';
 import { OrderStatusEnum } from 'src/Common/Enums/order.enums';
 import { GetAdminOrdersDto, GetMyOrdersDto } from './dto/get-order.dto';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
 @Injectable()
 export class OrdersService {
@@ -351,6 +352,36 @@ export class OrdersService {
 
     return {
       message: 'Order fetched successfully',
+      status: 200,
+      order,
+    };
+  }
+
+  async updateOrderStatus(orderId: string, dto: UpdateOrderStatusDto) {
+    if (!Types.ObjectId.isValid(orderId)) {
+      throw new BadRequestException('Invalid order ID');
+    }
+
+    const order = await this.orderModel.findById(orderId);
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (order.status === OrderStatusEnum.CANCELLED) {
+      throw new BadRequestException('Cancelled orders cannot be updated');
+    }
+
+    if (order.status === OrderStatusEnum.DELIVERED) {
+      throw new BadRequestException('Delivered orders cannot be updated');
+    }
+
+    order.status = dto.status;
+
+    await order.save();
+
+    return {
+      message: 'Order status updated successfully',
       status: 200,
       order,
     };
