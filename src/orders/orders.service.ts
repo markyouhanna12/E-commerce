@@ -244,4 +244,37 @@ export class OrdersService {
       order,
     };
   }
+
+  async getOrderStatus(userId: string, orderId: string) {
+    if (!Types.ObjectId.isValid(orderId)) {
+      throw new BadRequestException('Invalid order ID');
+    }
+
+    const order = await this.orderModel.findOne(
+      {
+        _id: new Types.ObjectId(orderId),
+        user: new Types.ObjectId(userId),
+      },
+      {
+        _id: 1,
+        status: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    );
+    if (!order) {
+      throw new NotFoundException(
+        'Order not found or you do not have access to this order',
+      );
+    }
+
+    return {
+      message: 'Order status fetched successfully',
+      status: 200,
+      order: {
+        id: order._id,
+        status: order.status,
+      },
+    };
+  }
 }

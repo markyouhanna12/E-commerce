@@ -56,4 +56,13 @@ export class OrdersController {
 
     return this.ordersService.cancelOrder(userId, orderId);
   }
+
+  @Get(':orderId/status')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.USER)
+  async getOrderStatus(@Req() req: any, @Param('orderId') orderId: string) {
+    const userId = req.user.id;
+
+    return this.ordersService.getOrderStatus(userId, orderId);
+  }
 }
