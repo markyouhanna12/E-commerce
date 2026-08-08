@@ -104,6 +104,12 @@ export class Coupon {
     ref: 'User',
   })
   createdBy!: mongoose.Types.ObjectId;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  })
+  usedBy!: mongoose.Types.ObjectId;
 }
 
 export const CouponSchema = SchemaFactory.createForClass(Coupon);

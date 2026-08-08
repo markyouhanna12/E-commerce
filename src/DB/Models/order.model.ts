@@ -1,5 +1,5 @@
 import { MongooseModule, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument } from 'mongoose';
+import mongoose, { HydratedDocument, Types } from 'mongoose';
 import { OrderStatusEnum } from 'src/Common/Enums/order.enums';
 
 @Schema({
@@ -12,7 +12,7 @@ export class OrderItem {
     required: true,
     ref: 'Product',
   })
-  product!: string;
+  product!: Types.ObjectId;
 
   @Prop({
     type: Number,
@@ -27,6 +27,7 @@ export class OrderItem {
   priceSnapshot!: number;
 }
 
+@Schema({ _id: false })
 export class ShippingAddress {
   @Prop({
     type: String,
@@ -47,13 +48,19 @@ export class ShippingAddress {
   region!: string;
 }
 
+export const ShippingAddressSchema =
+  SchemaFactory.createForClass(ShippingAddress);
+
+@Schema({
+  timestamps: true,
+})
 export class Order {
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'User',
   })
-  user!: string;
+  user!: Types.ObjectId;
 
   @Prop({
     type: [OrderItem],
@@ -87,7 +94,7 @@ export class Order {
   status!: string;
 
   @Prop({
-    type: String,
+    type: ShippingAddressSchema,
     required: true,
   })
   shippingAddress!: ShippingAddress;
@@ -96,7 +103,7 @@ export class Order {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Coupon',
   })
-  appliedCoupon!: string;
+  appliedCoupon!: Types.ObjectId;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
