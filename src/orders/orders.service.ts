@@ -6,7 +6,7 @@ import {
 import { CreateOrderDto } from './dto/create-order.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { HOrderDocument, Order } from 'src/DB/Models/order.model';
-import { Model, QueryFilter, Types } from 'mongoose';
+import { Model, QueryFilter, SortOrder, Types } from 'mongoose';
 import { Cart, HCartDocument } from 'src/DB/Models/cart.model';
 import { HProductDocument, Product } from 'src/DB/Models/products.model';
 import {
@@ -15,7 +15,7 @@ import {
   HCouponDocument,
 } from 'src/DB/Models/coupon.model';
 import { OrderStatusEnum } from 'src/Common/Enums/order.enums';
-import { GetMyOrdersDto } from './dto/get-order.dto';
+import { GetAdminOrdersDto, GetMyOrdersDto } from './dto/get-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -208,7 +208,7 @@ export class OrdersService {
 
     if (
       order.status !== OrderStatusEnum.PENDING &&
-      order.status !== OrderStatusEnum.PAID
+      order.status !== OrderStatusEnum.CONFIRMED
     ) {
       throw new BadRequestException(
         `Order cannot be cancelled because its current status is ${order.status}`,
@@ -275,6 +275,84 @@ export class OrdersService {
         id: order._id,
         status: order.status,
       },
+    };
+  }
+
+  async getAllOrders(dto: GetAdminOrdersDto) {
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 10;
+
+    const skip = (page - 1) * limit;
+
+    const filter: QueryFilter<Order> = {};
+
+    if (dto.status) {
+      filter.status = dto.status;
+    }
+
+    // Search
+    if (dto.search) {
+      const search = dto.search.trim();
+
+      if (Types.ObjectId.isValid(search)) {
+        filter.$or = [
+          {
+            _id: new Types.ObjectId(search),
+          },
+          {
+            user: new Types.ObjectId(search),
+          },
+        ];
+      }
+    }
+
+    const sort: Record<string, SortOrder> =
+      dto.sort === 'oldest' ? { createdAt: 1 } : { createdAt: -1 };
+
+    const [orders, total] = await Promise.all([
+      this.orderModel
+        .find(filter)
+        .populate('user', 'name email phone')
+        .populate('items.product')
+        .populate('appliedCoupon')
+        .sort(sort)
+        .skip(skip)
+        .limit(limit),
+
+      this.orderModel.countDocuments(filter),
+    ]);
+
+    return {
+      message: 'Orders fetched successfully',
+      status: 200,
+      orders,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getAdminOrder(orderId: string) {
+    if (!Types.ObjectId.isValid(orderId)) {
+      throw new BadRequestException('Invalid order ID');
+    }
+    const order = await this.orderModel
+      .findById(orderId)
+      .populate('user', 'name email phone')
+      .populate('items.product')
+      .populate('appliedCoupon');
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    return {
+      message: 'Order fetched successfully',
+      status: 200,
+      order,
     };
   }
 }
