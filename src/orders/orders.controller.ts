@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Query,
   Req,
@@ -35,5 +36,14 @@ export class OrdersController {
   async getMyOrders(@Req() req: any, @Query() dto: GetMyOrdersDto) {
     const userId = req.user.id;
     return this.ordersService.getMyOrders(userId, dto);
+  }
+
+  @Get(':orderId')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.USER)
+  async getMyOrder(@Req() req: any, @Param('orderId') orderId: string) {
+    const userId = req.user.id;
+
+    return this.ordersService.getMyOrder(userId, orderId);
   }
 }
