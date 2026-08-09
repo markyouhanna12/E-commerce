@@ -7,10 +7,18 @@ import { ProductModel } from 'src/DB/Models/products.model';
 import { TokenService } from 'src/Common/Tokens/token.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserModel } from 'src/DB/Models/user.model';
+import { CouponsResolver } from './graphql/coupons.resolver';
+import { CouponsGraphqlService } from './coupons.graphql.service';
 
 @Module({
   imports: [CouponModel, CartModel, ProductModel, UserModel],
   controllers: [CouponsController],
-  providers: [CouponsService, TokenService, JwtService],
+  providers: [
+    CouponsService,
+    TokenService,
+    JwtService,
+    CouponsResolver,
+    CouponsGraphqlService,
+  ],
 })
 export class CouponsModule {}
