@@ -3,6 +3,7 @@ import mongoose, { HydratedDocument, Types } from 'mongoose';
 import {
   OrderStatusEnum,
   PaymentMethodEnum,
+  PaymentStatusEnum,
 } from 'src/Common/Enums/order.enums';
 
 @Schema({
@@ -114,6 +115,18 @@ export class Order {
     default: PaymentMethodEnum.CASH_ON_DELIVERY,
   })
   paymentMethod!: string;
+
+  @Prop({
+    type: String,
+    enum: Object.values(PaymentStatusEnum),
+    default: PaymentStatusEnum.PENDING,
+  })
+  paymentStatus!: PaymentStatusEnum;
+
+  @Prop({
+    type: String,
+  })
+  stripeSessionId?: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

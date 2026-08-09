@@ -1,4 +1,5 @@
 import {
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -6,6 +7,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PaymentMethodEnum } from 'src/Common/Enums/order.enums';
 
 export class ShippingAddressDto {
   @IsString()
@@ -29,4 +31,7 @@ export class CreateOrderDto {
   @IsString()
   @IsOptional()
   couponCode?: string;
+
+  @IsEnum(PaymentMethodEnum)
+  paymentMethod!: PaymentMethodEnum;
 }

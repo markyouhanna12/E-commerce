@@ -110,7 +110,8 @@ export class OrdersService {
       ...(targetCoupon?._id && {
         appliedCoupon: targetCoupon._id,
       }),
-      status: OrderStatusEnum.PENDING,
+      status: OrderStatusEnum.PROCESSING,
+      paymentMethod: dto.paymentMethod,
     });
 
     await order.save();

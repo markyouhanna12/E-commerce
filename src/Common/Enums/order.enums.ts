@@ -13,3 +13,10 @@ export enum PaymentMethodEnum {
   PAYPAL = 'PAYPAL',
   APPLE_PAY = 'APPLE_PAY',
 }
+
+export enum PaymentStatusEnum {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  FAILED = 'FAILED',
+  REFUNDED = 'REFUNDED',
+}
