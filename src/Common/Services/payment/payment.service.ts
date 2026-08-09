@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, RawBody } from '@nestjs/common';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -28,5 +28,13 @@ export class PaymentService {
     });
 
     return session;
+  }
+
+  constructWebhookEvent(rawBody: Buffer, signature: string): Stripe.Event {
+    return this.stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET as string,
+    );
   }
 }

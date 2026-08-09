@@ -439,6 +439,18 @@ export class OrdersService {
       metadata: { orderId: orderId.toString() },
     });
 
+    await this.orderModel.updateOne(
+      {
+        _id: orderId,
+        user: userId,
+      },
+      {
+        $set: {
+          stripeSessionId: session.id,
+        },
+      },
+    );
+
     return session;
   }
 }
