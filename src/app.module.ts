@@ -5,7 +5,7 @@ import { UserModule } from './user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { resolve } from 'path';
+import { join, resolve } from 'path';
 import { DatabaseModule } from './DB/database.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
@@ -19,12 +19,20 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { CacheModule } from './cache/cache.module';
 import { OrdersModule } from './orders/orders.module';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath: resolve('./config/dev.env'),
       isGlobal: true,
+    }),
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      sortSchema: true,
+      context: ({ req }) => ({ req }),
     }),
     DatabaseModule,
     UserModule,
