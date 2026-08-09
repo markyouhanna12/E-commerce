@@ -19,6 +19,7 @@ import { CurrentUser } from 'src/auth/decorators/user.decorator';
 import { HUserDocument } from 'src/DB/Models/user.model';
 import { GetAdminOrdersDto, GetMyOrdersDto } from './dto/get-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { Types } from 'mongoose';
 
 @Controller('orders')
 export class OrdersController {
@@ -95,5 +96,21 @@ export class OrdersController {
     const userId = req.user.id;
 
     return this.ordersService.getMyOrder(userId, orderId);
+  }
+
+  @Post('/checkout/:orderId')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.USER)
+  async createCheckoutSession(
+    @Param('orderId') orderId: Types.ObjectId,
+    @Req() req: any,
+  ) {
+    const userId = req.user._id;
+    const session = await this.ordersService.createCheckoutSession(
+      orderId,
+      userId,
+    );
+
+    return session;
   }
 }

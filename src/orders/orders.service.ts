@@ -14,9 +14,14 @@ import {
   CouponType,
   HCouponDocument,
 } from 'src/DB/Models/coupon.model';
-import { OrderStatusEnum } from 'src/Common/Enums/order.enums';
+import {
+  OrderStatusEnum,
+  PaymentMethodEnum,
+} from 'src/Common/Enums/order.enums';
 import { GetAdminOrdersDto, GetMyOrdersDto } from './dto/get-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { HUserDocument } from 'src/DB/Models/user.model';
+import { PaymentService } from 'src/Common/Services/payment/payment.service';
 
 @Injectable()
 export class OrdersService {
@@ -27,6 +32,8 @@ export class OrdersService {
     private readonly productModel: Model<HProductDocument>,
     @InjectModel(Coupon.name)
     private readonly couponModel: Model<HCouponDocument>,
+
+    private readonly paymentService: PaymentService,
   ) {}
 
   async checkout(userId: string, dto: CreateOrderDto) {
@@ -385,5 +392,52 @@ export class OrdersService {
       status: 200,
       order,
     };
+  }
+
+  async createCheckoutSession(orderId: Types.ObjectId, userId: Types.ObjectId) {
+    const order = await this.orderModel
+      .findOne({
+        _id: orderId,
+        user: userId,
+        status: OrderStatusEnum.PROCESSING,
+        paymentMethod: PaymentMethodEnum.CARD,
+      })
+      .populate([
+        {
+          path: 'user',
+        },
+        {
+          path: 'appliedCoupon',
+        },
+      ]);
+
+    if (!order) {
+      throw new NotFoundException('Order Not Found');
+    }
+
+    const amount = order.finalPrice ?? order.subTotal ?? 0;
+    const line_items = [
+      {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `Order ${(order.user as unknown as HUserDocument).firstName}`,
+            description: `Payment for order on Address ${order.shippingAddress}`,
+          },
+          unit_amount: Math.round(amount * 100),
+        },
+        quantity: 1,
+      },
+    ];
+
+    const session = await this.paymentService.checkoutSession({
+      customer_email: (order.user as unknown as HUserDocument).email,
+      line_items: line_items,
+      mode: 'payment',
+      discounts: [],
+      metadata: { orderId: orderId.toString() },
+    });
+
+    return session;
   }
 }

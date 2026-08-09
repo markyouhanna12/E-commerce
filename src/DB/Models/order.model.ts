@@ -1,6 +1,9 @@
 import { MongooseModule, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
-import { OrderStatusEnum } from 'src/Common/Enums/order.enums';
+import {
+  OrderStatusEnum,
+  PaymentMethodEnum,
+} from 'src/Common/Enums/order.enums';
 
 @Schema({
   timestamps: true,
@@ -104,6 +107,13 @@ export class Order {
     ref: 'Coupon',
   })
   appliedCoupon!: Types.ObjectId;
+
+  @Prop({
+    type: String,
+    enum: Object.values(PaymentMethodEnum),
+    default: PaymentMethodEnum.CASH_ON_DELIVERY,
+  })
+  paymentMethod!: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
