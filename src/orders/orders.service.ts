@@ -22,6 +22,8 @@ import { GetAdminOrdersDto, GetMyOrdersDto } from './dto/get-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { HUserDocument } from 'src/DB/Models/user.model';
 import { PaymentService } from 'src/Common/Services/payment/payment.service';
+import { PaymentStatusEnum } from 'src/Common/Enums/order.enums';
+import Stripe from 'stripe';
 
 @Injectable()
 export class OrdersService {
@@ -452,5 +454,52 @@ export class OrdersService {
     );
 
     return session;
+  }
+
+  async handleStripeWebhook(rawBody: Buffer, signature: string) {
+    const event = this.paymentService.constructWebhookEvent(rawBody, signature);
+
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+
+        if (session.payment_status !== 'paid') {
+          break;
+        }
+        const orderId = session.metadata?.orderId;
+
+        if (!orderId) {
+          throw new BadRequestException(
+            'Order ID is missing from Stripe session metadata',
+          );
+        }
+
+        if (!Types.ObjectId.isValid(orderId)) {
+          throw new BadRequestException(
+            'Invalid order ID in Stripe session metadata',
+          );
+        }
+
+        const order = await this.orderModel.findOne({
+          _id: new Types.ObjectId(orderId),
+          paymentStatus: PaymentStatusEnum.PENDING,
+        });
+        if (!order) {
+          break;
+        }
+
+        order.paymentStatus = PaymentStatusEnum.PAID;
+        order.stripeSessionId = session.id;
+
+        await order.save();
+
+        break;
+      }
+      default:
+        break;
+    }
+    return {
+      received: true,
+    };
   }
 }

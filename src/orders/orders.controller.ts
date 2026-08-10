@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Patch,
   Post,
@@ -9,6 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
@@ -112,5 +114,13 @@ export class OrdersController {
     );
 
     return session;
+  }
+
+  @Post('payment/webhook')
+  async stripeWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('stripe-signature') signature: string,
+  ) {
+    return this.ordersService.handleStripeWebhook(req.rawBody!, signature);
   }
 }
