@@ -471,6 +471,24 @@ export class OrdersService {
       },
     );
 
+    const method = await this.paymentService.createPaymentMethod({
+      type: 'card',
+      card: { token: 'tok_visa' },
+    });
+
+    const intent = await this.paymentService.createPaymentIntent({
+      amount: order.subTotal * 100,
+      currency: 'usd',
+      payment_method: method.id,
+      payment_method_types: [PaymentMethodEnum.CARD.toLowerCase()],
+    });
+
+    order.intentId = intent.id;
+
+    await order.save();
+
+    await this.paymentService.confirmPaymentIntent(intent.id);
+
     return session;
   }
 

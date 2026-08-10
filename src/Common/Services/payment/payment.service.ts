@@ -1,4 +1,4 @@
-import { Injectable, RawBody } from '@nestjs/common';
+import { BadRequestException, Injectable, RawBody } from '@nestjs/common';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -42,5 +42,34 @@ export class PaymentService {
     const coupon = await this.stripe.coupons.create(data);
 
     return coupon;
+  }
+
+  async createPaymentMethod(data: Stripe.PaymentMethodCreateParams) {
+    const method = await this.stripe.paymentMethods.create(data);
+
+    return method;
+  }
+
+  async createPaymentIntent(data: Stripe.PaymentIntentCreateParams) {
+    const intent = await this.stripe.paymentIntents.create(data);
+
+    return intent;
+  }
+
+  async retrivePaymentIntents(id: string) {
+    const intent = await this.stripe.paymentIntents.retrieve(id);
+
+    return intent;
+  }
+
+  async confirmPaymentIntent(id: string) {
+    const intent = await this.retrivePaymentIntents(id);
+
+    if (!intent) {
+      throw new BadRequestException('Invalid Payment Intent ID');
+    }
+    const confirmIntent = await this.stripe.paymentIntents.confirm(id);
+
+    return confirmIntent;
   }
 }

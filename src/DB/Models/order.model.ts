@@ -127,6 +127,11 @@ export class Order {
     type: String,
   })
   stripeSessionId?: string;
+
+  @Prop({
+    type: String,
+  })
+  intentId?: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
