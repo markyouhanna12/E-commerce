@@ -418,7 +418,7 @@ export class OrdersService {
       throw new NotFoundException('Order Not Found');
     }
 
-    const amount = order.finalPrice ?? order.subTotal ?? 0;
+    const amount = order.subTotal;
     const line_items = [
       {
         price_data: {
@@ -433,11 +433,29 @@ export class OrdersService {
       },
     ];
 
+    let discounts: Stripe.Checkout.SessionCreateParams.Discount[] = [];
+
+    if (order.appliedCoupon) {
+      const couponData = await this.couponModel.findById(order.appliedCoupon);
+
+      if (!couponData) {
+        throw new NotFoundException('Coupon Not Found');
+      }
+
+      const coupon = await this.paymentService.createCoupon({
+        duration: 'once',
+        currency: 'usd',
+        percent_off: couponData?.value,
+      });
+
+      discounts.push({ coupon: coupon.id });
+    }
+
     const session = await this.paymentService.checkoutSession({
       customer_email: (order.user as unknown as HUserDocument).email,
       line_items: line_items,
       mode: 'payment',
-      discounts: [],
+      discounts,
       metadata: { orderId: orderId.toString() },
     });
 

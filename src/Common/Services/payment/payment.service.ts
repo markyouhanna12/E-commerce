@@ -37,4 +37,10 @@ export class PaymentService {
       process.env.STRIPE_WEBHOOK_SECRET as string,
     );
   }
+
+  async createCoupon(data: Stripe.CouponCreateParams) {
+    const coupon = await this.stripe.coupons.create(data);
+
+    return coupon;
+  }
 }
