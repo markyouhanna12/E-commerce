@@ -72,4 +72,18 @@ export class PaymentService {
 
     return confirmIntent;
   }
+
+  async createRefund(id: string) {
+    const intent = await this.retrivePaymentIntents(id);
+
+    if (!intent) {
+      throw new BadRequestException('Invalid Payment Intent ID');
+    }
+
+    const refund = await this.stripe.refunds.create({
+      payment_intent: id,
+    });
+
+    return refund;
+  }
 }

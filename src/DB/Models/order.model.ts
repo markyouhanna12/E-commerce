@@ -131,7 +131,17 @@ export class Order {
   @Prop({
     type: String,
   })
-  intentId?: string;
+  intentId!: string;
+
+  @Prop({
+    type: String,
+  })
+  refundId!: string;
+
+  @Prop({
+    type: Date,
+  })
+  refundAt!: Date;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

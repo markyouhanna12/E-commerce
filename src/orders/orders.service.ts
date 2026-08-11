@@ -538,4 +538,40 @@ export class OrdersService {
       received: true,
     };
   }
+
+  async createRefund(orderId: Types.ObjectId, userId: Types.ObjectId) {
+    const order = await this.orderModel.findOne({
+      _id: orderId,
+      user: userId,
+      paymentStatus: PaymentStatusEnum.PAID,
+      paymentMethod: PaymentMethodEnum.CARD,
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order Not Found');
+    }
+
+    if (!order.intentId) {
+      throw new BadRequestException(
+        'Payment Intent ID is missing for this order',
+      );
+    }
+
+    const refund = await this.paymentService.createRefund(order.intentId);
+
+    const refundedOrder = await this.orderModel.findByIdAndUpdate(
+      order.id,
+      {
+        status: OrderStatusEnum.CANCELLED,
+        refundId: refund.id,
+        refundAt: new Date(),
+        paymentStatus: PaymentStatusEnum.REFUNDED,
+        $unset: { intentId: true },
+        $inc: { __v: 1 },
+      },
+      { new: true },
+    );
+
+    return refundedOrder;
+  }
 }

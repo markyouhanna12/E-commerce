@@ -116,6 +116,19 @@ export class OrdersController {
     return session;
   }
 
+  @Post('/refund/:orderId')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.USER)
+  async createRefund(
+    @Param('orderId') orderId: Types.ObjectId,
+    @Req() req: any,
+  ) {
+    const userId = req.user._id;
+    const refund = await this.ordersService.createRefund(orderId, userId);
+
+    return refund;
+  }
+
   @Post('payment/webhook')
   async stripeWebhook(
     @Req() req: RawBodyRequest<Request>,
