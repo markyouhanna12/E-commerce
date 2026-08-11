@@ -80,8 +80,14 @@ export class PaymentService {
       throw new BadRequestException('Invalid Payment Intent ID');
     }
 
+    if (intent.status !== 'succeeded') {
+      throw new BadRequestException(
+        `Payment cannot be refunded because payment status is ${intent.status}`,
+      );
+    }
+
     const refund = await this.stripe.refunds.create({
-      payment_intent: id,
+      payment_intent: intent.id,
     });
 
     return refund;
