@@ -1,4 +1,12 @@
-import { Controller, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Headers,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
 import { PaymentsService } from './payment.service';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -24,5 +32,13 @@ export class PaymentController {
     );
 
     return session;
+  }
+
+  @Post('webhook')
+  async stripeWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('stripe-signature') signature: string,
+  ) {
+    return this.paymentService.handleStripeWebhook(req.rawBody!, signature);
   }
 }
