@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, RawBody } from '@nestjs/common';
 import Stripe from 'stripe';
 
 @Injectable()
-export class PaymentService {
+export class StripeService {
   private stripe: Stripe;
   constructor() {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);

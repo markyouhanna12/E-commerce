@@ -21,6 +21,7 @@ import { CacheModule } from './cache/cache.module';
 import { OrdersModule } from './orders/orders.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
     CouponsModule,
     CacheModule,
     OrdersModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

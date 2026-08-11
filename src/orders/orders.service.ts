@@ -21,9 +21,9 @@ import {
 import { GetAdminOrdersDto, GetMyOrdersDto } from './dto/get-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { HUserDocument } from 'src/DB/Models/user.model';
-import { PaymentService } from 'src/Common/Services/payment/payment.service';
 import { PaymentStatusEnum } from 'src/Common/Enums/order.enums';
 import Stripe from 'stripe';
+import { StripeService } from 'src/Common/Services/payment/payment.service';
 
 @Injectable()
 export class OrdersService {
@@ -35,7 +35,7 @@ export class OrdersService {
     @InjectModel(Coupon.name)
     private readonly couponModel: Model<HCouponDocument>,
 
-    private readonly paymentService: PaymentService,
+    private readonly stripeService: StripeService,
   ) {}
 
   async checkout(userId: string, dto: CreateOrderDto) {
@@ -397,168 +397,168 @@ export class OrdersService {
     };
   }
 
-  async createCheckoutSession(orderId: Types.ObjectId, userId: Types.ObjectId) {
-    const order = await this.orderModel
-      .findOne({
-        _id: orderId,
-        user: userId,
-        status: OrderStatusEnum.PROCESSING,
-        paymentMethod: PaymentMethodEnum.CARD,
-      })
-      .populate([
-        {
-          path: 'user',
-        },
-        {
-          path: 'appliedCoupon',
-        },
-      ]);
+  // async createCheckoutSession(orderId: Types.ObjectId, userId: Types.ObjectId) {
+  //   const order = await this.orderModel
+  //     .findOne({
+  //       _id: orderId,
+  //       user: userId,
+  //       status: OrderStatusEnum.PROCESSING,
+  //       paymentMethod: PaymentMethodEnum.CARD,
+  //     })
+  //     .populate([
+  //       {
+  //         path: 'user',
+  //       },
+  //       {
+  //         path: 'appliedCoupon',
+  //       },
+  //     ]);
 
-    if (!order) {
-      throw new NotFoundException('Order Not Found');
-    }
+  //   if (!order) {
+  //     throw new NotFoundException('Order Not Found');
+  //   }
 
-    const amount = order.subTotal;
+  //   const amount = order.subTotal;
 
-    const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [
-      {
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: `Order ${(order.user as unknown as HUserDocument).firstName}`,
-            description: `Payment for order on Address ${order.shippingAddress}`,
-          },
-          unit_amount: Math.round(amount * 100),
-        },
-        quantity: 1,
-      },
-    ];
+  //   const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+  //     {
+  //       price_data: {
+  //         currency: 'usd',
+  //         product_data: {
+  //           name: `Order ${(order.user as unknown as HUserDocument).firstName}`,
+  //           description: `Payment for order on Address ${order.shippingAddress}`,
+  //         },
+  //         unit_amount: Math.round(amount * 100),
+  //       },
+  //       quantity: 1,
+  //     },
+  //   ];
 
-    let discounts: Stripe.Checkout.SessionCreateParams.Discount[] = [];
+  //   let discounts: Stripe.Checkout.SessionCreateParams.Discount[] = [];
 
-    if (order.appliedCoupon) {
-      const couponData = await this.couponModel.findById(order.appliedCoupon);
+  //   if (order.appliedCoupon) {
+  //     const couponData = await this.couponModel.findById(order.appliedCoupon);
 
-      if (!couponData) {
-        throw new NotFoundException('Coupon Not Found');
-      }
+  //     if (!couponData) {
+  //       throw new NotFoundException('Coupon Not Found');
+  //     }
 
-      const coupon = await this.paymentService.createCoupon({
-        duration: 'once',
-        currency: 'usd',
-        percent_off: couponData?.value,
-      });
+  //     const coupon = await this.paymentService.createCoupon({
+  //       duration: 'once',
+  //       currency: 'usd',
+  //       percent_off: couponData?.value,
+  //     });
 
-      discounts.push({ coupon: coupon.id });
-    }
+  //     discounts.push({ coupon: coupon.id });
+  //   }
 
-    const session = await this.paymentService.checkoutSession({
-      customer_email: (order.user as unknown as HUserDocument).email,
-      line_items: line_items,
-      mode: 'payment',
-      discounts,
-      metadata: { orderId: orderId.toString() },
-    });
+  //   const session = await this.paymentService.checkoutSession({
+  //     customer_email: (order.user as unknown as HUserDocument).email,
+  //     line_items: line_items,
+  //     mode: 'payment',
+  //     discounts,
+  //     metadata: { orderId: orderId.toString() },
+  //   });
 
-    await this.orderModel.updateOne(
-      {
-        _id: orderId,
-        user: userId,
-      },
-      {
-        $set: {
-          stripeSessionId: session.id,
-        },
-      },
-    );
+  //   await this.orderModel.updateOne(
+  //     {
+  //       _id: orderId,
+  //       user: userId,
+  //     },
+  //     {
+  //       $set: {
+  //         stripeSessionId: session.id,
+  //       },
+  //     },
+  //   );
 
-    return session;
-  }
+  //   return session;
+  // }
 
-  async handleStripeWebhook(rawBody: Buffer, signature: string) {
-    const event = this.paymentService.constructWebhookEvent(rawBody, signature);
+  // async handleStripeWebhook(rawBody: Buffer, signature: string) {
+  //   const event = this.paymentService.constructWebhookEvent(rawBody, signature);
 
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session;
+  //   switch (event.type) {
+  //     case 'checkout.session.completed': {
+  //       const session = event.data.object as Stripe.Checkout.Session;
 
-        if (session.payment_status !== 'paid') {
-          break;
-        }
-        const orderId = session.metadata?.orderId;
+  //       if (session.payment_status !== 'paid') {
+  //         break;
+  //       }
+  //       const orderId = session.metadata?.orderId;
 
-        if (!orderId) {
-          throw new BadRequestException(
-            'Order ID is missing from Stripe session metadata',
-          );
-        }
+  //       if (!orderId) {
+  //         throw new BadRequestException(
+  //           'Order ID is missing from Stripe session metadata',
+  //         );
+  //       }
 
-        if (!Types.ObjectId.isValid(orderId)) {
-          throw new BadRequestException(
-            'Invalid order ID in Stripe session metadata',
-          );
-        }
+  //       if (!Types.ObjectId.isValid(orderId)) {
+  //         throw new BadRequestException(
+  //           'Invalid order ID in Stripe session metadata',
+  //         );
+  //       }
 
-        const order = await this.orderModel.findOne({
-          _id: new Types.ObjectId(orderId),
-          paymentStatus: PaymentStatusEnum.PENDING,
-        });
-        if (!order) {
-          break;
-        }
+  //       const order = await this.orderModel.findOne({
+  //         _id: new Types.ObjectId(orderId),
+  //         paymentStatus: PaymentStatusEnum.PENDING,
+  //       });
+  //       if (!order) {
+  //         break;
+  //       }
 
-        order.paymentStatus = PaymentStatusEnum.PAID;
-        order.stripeSessionId = session.id;
+  //       order.paymentStatus = PaymentStatusEnum.PAID;
+  //       order.stripeSessionId = session.id;
 
-        if (typeof session.payment_intent === 'string') {
-          order.intentId = session.payment_intent;
-        }
+  //       if (typeof session.payment_intent === 'string') {
+  //         order.intentId = session.payment_intent;
+  //       }
 
-        await order.save();
+  //       await order.save();
 
-        break;
-      }
-      default:
-        break;
-    }
-    return {
-      received: true,
-    };
-  }
+  //       break;
+  //     }
+  //     default:
+  //       break;
+  //   }
+  //   return {
+  //     received: true,
+  //   };
+  // }
 
-  async createRefund(orderId: Types.ObjectId, userId: Types.ObjectId) {
-    const order = await this.orderModel.findOne({
-      _id: orderId,
-      user: userId,
-      paymentStatus: PaymentStatusEnum.PAID,
-      paymentMethod: PaymentMethodEnum.CARD,
-    });
+  // async createRefund(orderId: Types.ObjectId, userId: Types.ObjectId) {
+  //   const order = await this.orderModel.findOne({
+  //     _id: orderId,
+  //     user: userId,
+  //     paymentStatus: PaymentStatusEnum.PAID,
+  //     paymentMethod: PaymentMethodEnum.CARD,
+  //   });
 
-    if (!order) {
-      throw new NotFoundException('Order Not Found');
-    }
+  //   if (!order) {
+  //     throw new NotFoundException('Order Not Found');
+  //   }
 
-    if (!order.intentId) {
-      throw new BadRequestException(
-        'Payment Intent ID is missing for this order',
-      );
-    }
+  //   if (!order.intentId) {
+  //     throw new BadRequestException(
+  //       'Payment Intent ID is missing for this order',
+  //     );
+  //   }
 
-    const refund = await this.paymentService.createRefund(order.intentId);
+  //   const refund = await this.paymentService.createRefund(order.intentId);
 
-    const refundedOrder = await this.orderModel.findByIdAndUpdate(
-      order.id,
-      {
-        status: OrderStatusEnum.CANCELLED,
-        refundId: refund.id,
-        refundAt: new Date(),
-        paymentStatus: PaymentStatusEnum.REFUNDED,
-        $unset: { intentId: true },
-        $inc: { __v: 1 },
-      },
-      { new: true },
-    );
+  //   const refundedOrder = await this.orderModel.findByIdAndUpdate(
+  //     order.id,
+  //     {
+  //       status: OrderStatusEnum.CANCELLED,
+  //       refundId: refund.id,
+  //       refundAt: new Date(),
+  //       paymentStatus: PaymentStatusEnum.REFUNDED,
+  //       $unset: { intentId: true },
+  //       $inc: { __v: 1 },
+  //     },
+  //     { new: true },
+  //   );
 
-    return refundedOrder;
-  }
+  //   return refundedOrder;
+  // }
 }

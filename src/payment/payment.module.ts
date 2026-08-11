@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
-import { OrdersService } from './orders.service';
-import { OrdersController } from './orders.controller';
-import { JwtService } from '@nestjs/jwt';
-import { TokenService } from 'src/Common/Tokens/token.service';
+import { PaymentController } from './payment.controller';
+import { PaymentsService } from './payment.service';
 import { CartModel } from 'src/DB/Models/cart.model';
 import { ProductModel } from 'src/DB/Models/products.model';
 import { CouponModel } from 'src/DB/Models/coupon.model';
@@ -12,7 +10,7 @@ import { StripeService } from 'src/Common/Services/payment/payment.service';
 
 @Module({
   imports: [CartModel, ProductModel, CouponModel, OrderModel, UserModel],
-  controllers: [OrdersController],
-  providers: [OrdersService, TokenService, JwtService, StripeService],
+  controllers: [PaymentController],
+  providers: [PaymentsService, StripeService],
 })
-export class OrdersModule {}
+export class PaymentModule {}
