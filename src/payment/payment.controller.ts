@@ -56,11 +56,21 @@ export class PaymentController {
     return refund;
   }
 
-  @Get(':orderId')
-  @UseGuards(AuthGuard)
+  @Get('orders/:orderId')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.USER)
   async getPayment(@Param('orderId') orderId: Types.ObjectId, @Req() req: any) {
     const userId = req.user.id;
 
     return this.paymentService.getPayment(orderId, userId);
+  }
+
+  @Get('my-payments')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.USER)
+  async getMyPayments(@Req() req: any) {
+    const userId = req.user.id;
+
+    return this.paymentService.getMyPayments(userId);
   }
 }

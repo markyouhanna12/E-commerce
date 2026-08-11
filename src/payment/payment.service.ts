@@ -236,4 +236,41 @@ export class PaymentsService {
       },
     };
   }
+
+  async getMyPayments(userId: Types.ObjectId) {
+    const orders = await this.orderModel
+      .find(
+        {
+          user: userId,
+        },
+        {
+          _id: 1,
+          finalPrice: 1,
+          paymentMethod: 1,
+          paymentStatus: 1,
+          stripeSessionId: 1,
+          intentId: 1,
+          refundId: 1,
+          refundAt: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      )
+      .sort({ createdAt: -1 });
+
+    return {
+      message: 'Payment history fetched successfully',
+      status: 200,
+      payments: orders.map((order) => ({
+        orderId: order._id,
+        amount: order.finalPrice,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        stripeSessionId: order.stripeSessionId,
+        intentId: order.intentId,
+        refundId: order.refundId,
+        refundAt: order.refundAt,
+      })),
+    };
+  }
 }
