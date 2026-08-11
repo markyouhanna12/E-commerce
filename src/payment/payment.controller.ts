@@ -84,10 +84,17 @@ export class PaymentController {
     return this.paymentService.getAllPayments(dto);
   }
 
-  @Get('admin/:orderId')
+  @Get('admin/orders/:orderId')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(RoleEnum.ADMIN)
   async getAdminPayment(@Param('orderId') orderId: string) {
     return this.paymentService.getAdminPayment(new Types.ObjectId(orderId));
+  }
+
+  @Get('admin/statistics')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  async getPaymentStatistics() {
+    return this.paymentService.getPaymentStatistics();
   }
 }

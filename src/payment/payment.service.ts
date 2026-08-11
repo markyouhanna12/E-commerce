@@ -388,4 +388,77 @@ export class PaymentsService {
       },
     };
   }
+
+  async getPaymentStatistics() {
+    const [
+      totalPayments,
+      paidPayments,
+      pendingPayments,
+      refundedPayments,
+      revenueResult,
+      refundedAmountResult,
+    ] = await Promise.all([
+      this.orderModel.countDocuments({
+        paymentMethod: PaymentMethodEnum.CARD,
+      }),
+      this.orderModel.countDocuments({
+        paymentMethod: PaymentMethodEnum.CARD,
+        paymentStatus: PaymentStatusEnum.PAID,
+      }),
+      this.orderModel.countDocuments({
+        paymentMethod: PaymentMethodEnum.CARD,
+        paymentStatus: PaymentStatusEnum.PENDING,
+      }),
+
+      this.orderModel.countDocuments({
+        paymentMethod: PaymentMethodEnum.CARD,
+        paymentStatus: PaymentStatusEnum.REFUNDED,
+      }),
+
+      this.orderModel.aggregate([
+        {
+          $match: {
+            paymentMethod: PaymentMethodEnum.CARD,
+            paymentStatus: PaymentStatusEnum.PAID,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: {
+              $sum: '$finalPrice',
+            },
+          },
+        },
+      ]),
+      this.orderModel.aggregate([
+        {
+          $match: {
+            paymentMethod: PaymentMethodEnum.CARD,
+            paymentStatus: PaymentStatusEnum.REFUNDED,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalRefunded: {
+              $sum: '$finalPrice',
+            },
+          },
+        },
+      ]),
+    ]);
+    return {
+      message: 'Payment statistics fetched successfully',
+      status: 200,
+      statistics: {
+        totalPayments,
+        paidPayments,
+        pendingPayments,
+        refundedPayments,
+        totalRevenue: revenueResult[0]?.totalRevenue ?? 0,
+        totalRefunded: refundedAmountResult[0]?.totalRefunded ?? 0,
+      },
+    };
+  }
 }
