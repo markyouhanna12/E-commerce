@@ -14,16 +14,12 @@ import { StripeService } from 'src/Common/Services/payment/payment.service';
 import { Cart, HCartDocument } from 'src/DB/Models/cart.model';
 import { Coupon, HCouponDocument } from 'src/DB/Models/coupon.model';
 import { HOrderDocument, Order } from 'src/DB/Models/order.model';
-import { HProductDocument, Product } from 'src/DB/Models/products.model';
 import { HUserDocument } from 'src/DB/Models/user.model';
 import Stripe from 'stripe';
 @Injectable()
 export class PaymentsService {
   constructor(
     @InjectModel(Order.name) private readonly orderModel: Model<HOrderDocument>,
-    @InjectModel(Cart.name) private readonly cartModel: Model<HCartDocument>,
-    @InjectModel(Product.name)
-    private readonly productModel: Model<HProductDocument>,
     @InjectModel(Coupon.name)
     private readonly couponModel: Model<HCouponDocument>,
 
@@ -31,25 +27,39 @@ export class PaymentsService {
   ) {}
 
   async createCheckoutSession(orderId: Types.ObjectId, userId: Types.ObjectId) {
+    if (!Types.ObjectId.isValid(orderId)) {
+      throw new BadRequestException('Invalid order ID');
+    }
+
     const order = await this.orderModel
       .findOne({
         _id: orderId,
         user: userId,
         status: OrderStatusEnum.PROCESSING,
         paymentMethod: PaymentMethodEnum.CARD,
+        paymentStatus: PaymentStatusEnum.PENDING,
       })
-      .populate([
-        {
-          path: 'user',
-        },
-        {
-          path: 'appliedCoupon',
-        },
-      ]);
+      .populate('user');
 
     if (!order) {
-      throw new NotFoundException('Order Not Found');
+      throw new NotFoundException(
+        'Order not found or is not available for payment',
+      );
     }
+
+    if (order.finalPrice <= 0) {
+      throw new BadRequestException(
+        'Order final price must be greater than zero',
+      );
+    }
+
+    if (order.stripeSessionId) {
+      throw new BadRequestException(
+        'Checkout session already exists for this order',
+      );
+    }
+
+    const user = order.user as unknown as HUserDocument;
 
     const amount = order.subTotal;
 
@@ -58,8 +68,8 @@ export class PaymentsService {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: `Order ${(order.user as unknown as HUserDocument).firstName}`,
-            description: `Payment for order on Address ${order.shippingAddress}`,
+            name: `Order for ${user.firstName}`,
+            description: `Payment for order ${order._id}`,
           },
           unit_amount: Math.round(amount * 100),
         },
@@ -86,7 +96,7 @@ export class PaymentsService {
     }
 
     const session = await this.stripeService.checkoutSession({
-      customer_email: (order.user as unknown as HUserDocument).email,
+      customer_email: user.email,
       line_items: line_items,
       mode: 'payment',
       discounts,
