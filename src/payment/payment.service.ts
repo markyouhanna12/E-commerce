@@ -196,7 +196,6 @@ export class PaymentsService {
         refundId: refund.id,
         refundAt: new Date(),
         paymentStatus: PaymentStatusEnum.REFUNDED,
-        $unset: { intentId: true },
         $inc: { __v: 1 },
       },
       { new: true },

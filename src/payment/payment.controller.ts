@@ -41,4 +41,17 @@ export class PaymentController {
   ) {
     return this.paymentService.handleStripeWebhook(req.rawBody!, signature);
   }
+
+  @Post('/refund/:orderId')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.USER)
+  async createRefund(
+    @Param('orderId') orderId: Types.ObjectId,
+    @Req() req: any,
+  ) {
+    const userId = req.user._id;
+    const refund = await this.paymentService.createRefund(orderId, userId);
+
+    return refund;
+  }
 }
