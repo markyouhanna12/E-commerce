@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, QueryFilter, SortOrder, Types } from 'mongoose';
 import {
   OrderStatusEnum,
   PaymentMethodEnum,
@@ -16,6 +16,10 @@ import { Coupon, HCouponDocument } from 'src/DB/Models/coupon.model';
 import { HOrderDocument, Order } from 'src/DB/Models/order.model';
 import { HUserDocument } from 'src/DB/Models/user.model';
 import Stripe from 'stripe';
+import {
+  GetAdminPaymentsDto,
+  PaymentSortEnum,
+} from './dto/get-admin-payments.dto';
 @Injectable()
 export class PaymentsService {
   constructor(
@@ -271,6 +275,117 @@ export class PaymentsService {
         refundId: order.refundId,
         refundAt: order.refundAt,
       })),
+    };
+  }
+
+  async getAllPayments(dto: GetAdminPaymentsDto) {
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 10;
+
+    const skip = (page - 1) * limit;
+
+    const filter: QueryFilter<Order> = {
+      paymentMethod: PaymentMethodEnum.CARD,
+    };
+
+    if (dto.status) {
+      filter.paymentStatus = dto.status;
+    }
+
+    if (dto.search) {
+      const search = dto.search.trim();
+
+      if (Types.ObjectId.isValid(search)) {
+        filter.$or = [
+          {
+            _id: new Types.ObjectId(search),
+          },
+          {
+            user: new Types.ObjectId(search),
+          },
+        ];
+      }
+    }
+
+    const sort: Record<string, SortOrder> =
+      dto.sort === PaymentSortEnum.OLDEST
+        ? { createdAt: 1 }
+        : { createdAt: -1 };
+
+    const [payments, total] = await Promise.all([
+      this.orderModel
+        .find(filter)
+        .populate('user', 'firstName lastName email phone')
+        .select({
+          _id: 1,
+          user: 1,
+          finalPrice: 1,
+          subTotal: 1,
+          discountAmount: 1,
+          paymentMethod: 1,
+          paymentStatus: 1,
+          stripeSessionId: 1,
+          intentId: 1,
+          refundId: 1,
+          refundAt: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        })
+        .sort(sort)
+        .skip(skip)
+        .limit(limit),
+
+      this.orderModel.countDocuments(filter),
+    ]);
+
+    return {
+      message: 'Payments fetched successfully',
+      status: 200,
+      payments,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getAdminPayment(orderId: Types.ObjectId) {
+    if (!Types.ObjectId.isValid(orderId)) {
+      throw new BadRequestException('Invalid order ID');
+    }
+    const order = await this.orderModel
+      .findOne({
+        _id: orderId,
+        paymentMethod: PaymentMethodEnum.CARD,
+      })
+      .populate('user', 'firstName lastName email phone')
+      .populate('items.product', 'name price');
+
+    if (!order) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    return {
+      message: 'Payment fetched successfully',
+      status: 200,
+      payment: {
+        orderId: order._id,
+        user: order.user,
+        items: order.items,
+        subTotal: order.subTotal,
+        discountAmount: order.discountAmount,
+        finalPrice: order.finalPrice,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        orderStatus: order.status,
+        stripeSessionId: order.stripeSessionId,
+        intentId: order.intentId,
+        refundId: order.refundId,
+        refundAt: order.refundAt,
+      },
     };
   }
 }

@@ -1,9 +1,11 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Headers,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -14,6 +16,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { RoleEnum } from 'src/Common/Enums/user.enums';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Types } from 'mongoose';
+import { GetAdminPaymentsDto } from './dto/get-admin-payments.dto';
 
 @Controller('payment')
 export class PaymentController {
@@ -72,5 +75,19 @@ export class PaymentController {
     const userId = req.user.id;
 
     return this.paymentService.getMyPayments(userId);
+  }
+
+  @Get('admin')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  async getAllPayments(@Query() dto: GetAdminPaymentsDto) {
+    return this.paymentService.getAllPayments(dto);
+  }
+
+  @Get('admin/:orderId')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  async getAdminPayment(@Param('orderId') orderId: string) {
+    return this.paymentService.getAdminPayment(new Types.ObjectId(orderId));
   }
 }
