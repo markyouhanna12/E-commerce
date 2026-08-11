@@ -203,4 +203,37 @@ export class PaymentsService {
 
     return refundedOrder;
   }
+
+  async getPayment(orderId: Types.ObjectId, userId: Types.ObjectId) {
+    if (!Types.ObjectId.isValid(orderId)) {
+      throw new BadRequestException('Invalid order ID');
+    }
+
+    const order = await this.orderModel.findOne({
+      _id: orderId,
+      user: userId,
+      paymentMethod: PaymentMethodEnum.CARD,
+    });
+
+    if (!order) {
+      throw new NotFoundException(
+        'Order not found or you do not have access to this payment',
+      );
+    }
+
+    return {
+      message: 'Payment fetched successfully',
+      status: 200,
+      payment: {
+        orderId: order._id,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        amount: order.finalPrice,
+        stripeSessionId: order.stripeSessionId,
+        intentId: order.intentId,
+        refundId: order.refundId,
+        refundAt: order.refundAt,
+      },
+    };
+  }
 }

@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Headers,
   Param,
   Post,
@@ -53,5 +54,13 @@ export class PaymentController {
     const refund = await this.paymentService.createRefund(orderId, userId);
 
     return refund;
+  }
+
+  @Get(':orderId')
+  @UseGuards(AuthGuard)
+  async getPayment(@Param('orderId') orderId: Types.ObjectId, @Req() req: any) {
+    const userId = req.user.id;
+
+    return this.paymentService.getPayment(orderId, userId);
   }
 }
