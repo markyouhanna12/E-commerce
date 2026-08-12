@@ -12,6 +12,7 @@ import {
 } from 'src/DB/Models/invoice.model';
 import { HOrderDocument, Order } from 'src/DB/Models/order.model';
 import { HUserDocument } from 'src/DB/Models/user.model';
+import { InvoicePdfService } from './invoice-pdf.service';
 
 @Injectable()
 export class InvoiceService {
@@ -20,6 +21,7 @@ export class InvoiceService {
     private readonly invoiceModel: Model<HInvoiceDocument>,
     @InjectModel(Order.name)
     private readonly orderModel: Model<HOrderDocument>,
+    private readonly invoicePdfService: InvoicePdfService,
   ) {}
 
   private async generateInvoiceNumber(): Promise<string> {
@@ -113,5 +115,19 @@ export class InvoiceService {
     });
 
     return invoice;
+  }
+
+  async generateInvoicePdf(invoiceId: string): Promise<Buffer> {
+    if (!Types.ObjectId.isValid(invoiceId)) {
+      throw new BadRequestException('Invalid invoice ID');
+    }
+
+    const invoice = await this.invoiceModel.findById(invoiceId);
+
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    return this.invoicePdfService.generateInvoicePdf(invoice);
   }
 }
