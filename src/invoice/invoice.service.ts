@@ -155,4 +155,37 @@ export class InvoiceService {
       pdfBuffer,
     );
   }
+
+  async processInvoice(orderId: Types.ObjectId) {
+    const invoice = await this.createInvoice(orderId);
+
+    if (invoice.emailSentAt) {
+      return {
+        invoice,
+        emailSent: false,
+        message: 'Invoice email has already been sent',
+      };
+    }
+
+    const pdfBuffer = await this.invoicePdfService.generateInvoicePdf(invoice);
+
+    await this.mailService.sendInvoiceEmail(
+      invoice.customerEmail,
+      invoice.customerName,
+      invoice.invoiceNumber,
+      invoice.total,
+      invoice.currency,
+      pdfBuffer,
+    );
+
+    invoice.emailSentAt = new Date();
+    invoice.pdfFileName = `${invoice.invoiceNumber}.pdf`;
+
+    await invoice.save();
+
+    return {
+      invoice,
+      emailSent: true,
+    };
+  }
 }

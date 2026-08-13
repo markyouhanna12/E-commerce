@@ -158,6 +158,11 @@ export class Invoice {
     type: String,
   })
   pdfFileName?: string;
+
+  @Prop({
+    type: Date,
+  })
+  emailSentAt?: Date;
 }
 
 export const InvoiceSchema = SchemaFactory.createForClass(Invoice);
