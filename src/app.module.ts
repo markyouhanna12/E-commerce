@@ -23,6 +23,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { PaymentModule } from './payment/payment.module';
 import { InvoiceModule } from './invoice/invoice.module';
+import { WishlistModule } from './wishlist/wishlist.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { InvoiceModule } from './invoice/invoice.module';
     OrdersModule,
     PaymentModule,
     InvoiceModule,
+    WishlistModule,
   ],
   controllers: [AppController],
   providers: [AppService],
