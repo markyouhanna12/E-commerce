@@ -34,4 +34,16 @@ export class InvoiceController {
 
     res.end(pdfBuffer);
   }
+
+  @Post(':invoiceId/send-email')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(RoleEnum.USER)
+  async sendInvoiceEmail(@Param('invoiceId') invoiceId: string) {
+    await this.invoiceService.sendInvoiceEmail(invoiceId);
+
+    return {
+      message: 'Invoice email sent successfully',
+      status: 200,
+    };
+  }
 }
