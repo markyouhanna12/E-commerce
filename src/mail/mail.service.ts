@@ -19,4 +19,44 @@ export class MailService {
       this.logger.error(`Failed to send email to : ${email}`);
     }
   }
+
+  async sendInvoiceEmail(
+    email: string,
+    customerName: string,
+    invoiceNumber: string,
+    total: number,
+    currency: string,
+    pdfBuffer: Buffer,
+  ): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: `Your Invoice ${invoiceNumber}`,
+        template: './invoice.ejs',
+        context: {
+          customerName,
+          invoiceNumber,
+          total: total.toFixed(2),
+          currency,
+        },
+        attachments: [
+          {
+            filename: `${invoiceNumber}.pdf`,
+            content: pdfBuffer,
+            conentType: 'application/pdf',
+          },
+        ],
+      });
+
+      this.logger.log(
+        `Invoice ${invoiceNumber} successfully sent to : ${email}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send invoice ${invoiceNumber} to : ${email}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    }
+  }
 }
