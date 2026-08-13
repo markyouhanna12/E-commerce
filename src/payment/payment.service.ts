@@ -20,14 +20,15 @@ import {
   GetAdminPaymentsDto,
   PaymentSortEnum,
 } from './dto/get-admin-payments.dto';
+import { InvoiceService } from 'src/invoice/invoice.service';
 @Injectable()
 export class PaymentsService {
   constructor(
     @InjectModel(Order.name) private readonly orderModel: Model<HOrderDocument>,
     @InjectModel(Coupon.name)
     private readonly couponModel: Model<HCouponDocument>,
-
     private readonly stripeService: StripeService,
+    private readonly invoiceService: InvoiceService,
   ) {}
 
   async createCheckoutSession(orderId: Types.ObjectId, userId: Types.ObjectId) {
@@ -148,22 +149,33 @@ export class PaymentsService {
 
         const order = await this.orderModel.findOne({
           _id: new Types.ObjectId(orderId),
-          paymentStatus: PaymentStatusEnum.PENDING,
         });
+
         if (!order) {
-          break;
+          throw new NotFoundException('Order not found');
         }
 
-        order.paymentStatus = PaymentStatusEnum.PAID;
-        order.stripeSessionId = session.id;
+        if (order.paymentStatus === PaymentStatusEnum.PENDING) {
+          order.paymentStatus = PaymentStatusEnum.PAID;
 
-        if (typeof session.payment_intent === 'string') {
-          order.intentId = session.payment_intent;
+          order.stripeSessionId = session.id;
+
+          // Stripe payment_intent can be string or object/null
+          if (typeof session.payment_intent === 'string') {
+            order.intentId = session.payment_intent;
+          }
+
+          await order.save();
         }
 
-        await order.save();
-
-        break;
+        try {
+          await this.invoiceService.processInvoice(order._id as Types.ObjectId);
+        } catch (error) {
+          console.error(
+            `Invoice processing failed for order ${order._id}`,
+            error,
+          );
+        }
       }
       default:
         break;

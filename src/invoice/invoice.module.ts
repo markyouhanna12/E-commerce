@@ -13,5 +13,6 @@ import { InvoicePdfService } from './invoice-pdf.service';
   imports: [InvoiceModel, OrderModel, UserModel, MailModule],
   controllers: [InvoiceController],
   providers: [InvoiceService, JwtService, TokenService, InvoicePdfService],
+  exports: [InvoiceService],
 })
 export class InvoiceModule {}

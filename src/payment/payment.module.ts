@@ -9,9 +9,17 @@ import { UserModel } from 'src/DB/Models/user.model';
 import { StripeService } from 'src/Common/Services/payment/payment.service';
 import { TokenService } from 'src/Common/Tokens/token.service';
 import { JwtService } from '@nestjs/jwt';
+import { InvoiceModule } from 'src/invoice/invoice.module';
 
 @Module({
-  imports: [CartModel, ProductModel, CouponModel, OrderModel, UserModel],
+  imports: [
+    CartModel,
+    ProductModel,
+    CouponModel,
+    OrderModel,
+    UserModel,
+    InvoiceModule,
+  ],
   controllers: [PaymentController],
   providers: [PaymentsService, StripeService, TokenService, JwtService],
 })
