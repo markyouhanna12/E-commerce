@@ -93,6 +93,12 @@ export class User {
     type: String,
   })
   ProfilePic!: string;
+
+  @Prop({
+    type: [String],
+    default: [],
+  })
+  notificationTokens!: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
