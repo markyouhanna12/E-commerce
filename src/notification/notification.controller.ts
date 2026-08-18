@@ -25,4 +25,10 @@ export class NotificationController {
       registerDeviceDto.token,
     );
   }
+
+  @Post('test-send')
+  @UseGuards(AuthGuard)
+  async testSend(@CurrentUser() user: HUserDocument) {
+    return this.notificationService.testSend(user);
+  }
 }
