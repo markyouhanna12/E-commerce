@@ -24,6 +24,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { PaymentModule } from './payment/payment.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { WishlistModule } from './wishlist/wishlist.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
     PaymentModule,
     InvoiceModule,
     WishlistModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
