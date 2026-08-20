@@ -119,6 +119,9 @@ async function registerDevice(token) {
 onMessage(messaging, (payload) => {
   console.log('Foreground notification:', payload);
 
+  console.log('Notification:', payload.notification);
+  console.log('Data:', payload.data);
+
   alert(
     `${payload.notification?.title || 'Notification'}\n\n` +
       `${payload.notification?.body || ''}`,
