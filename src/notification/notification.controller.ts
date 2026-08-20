@@ -41,10 +41,18 @@ export class NotificationController {
   @Post('test-send')
   @UseGuards(AuthGuard)
   async testSend(@CurrentUser() user: HUserDocument) {
-    return this.notificationService.sendToUser(
-      user._id.toString(),
-      'Test Notification',
-      'Hello from your NestJS e-commerce application!',
-    );
+    return this.notificationService.sendToUser({
+      userId: user._id.toString(),
+
+      title: 'Test Notification',
+
+      body: 'Hello from your NestJS e-commerce application!',
+
+      type: 'TEST_NOTIFICATION',
+
+      data: {
+        source: 'test-api',
+      },
+    });
   }
 }

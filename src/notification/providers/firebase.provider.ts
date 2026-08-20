@@ -36,13 +36,19 @@ export class FirebaseProvider {
     this.firebaseMessaging = getMessaging(app);
   }
 
-  async sendToToken(token: string, title: string, body: string) {
+  async sendToToken(
+    token: string,
+    title: string,
+    body: string,
+    data?: Record<string, string>,
+  ) {
     return this.firebaseMessaging.send({
       token,
       notification: {
         title,
         body,
       },
+      data,
     });
   }
 }

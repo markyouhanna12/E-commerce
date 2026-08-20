@@ -7,6 +7,7 @@ import { FirebaseProvider } from './providers/firebase.provider';
 import { HUserDocument, User } from 'src/DB/Models/user.model';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { INotificationPayload } from './interfaces/notification-payload.interface';
 
 @Injectable()
 export class NotificationService {
@@ -55,24 +56,8 @@ export class NotificationService {
     return this.firebaseProvider.sendToToken(token, title, body);
   }
 
-  async testSend(user: HUserDocument) {
-    const token = user.notificationTokens[0];
-
-    if (!token) {
-      throw new BadRequestException(
-        'User has no registered notification device',
-      );
-    }
-
-    return this.firebaseProvider.sendToToken(
-      token,
-      'Test Notification',
-      'Hello from your NestJS e-commerce application!',
-    );
-  }
-
-  async sendToUser(userId: string, title: string, body: string) {
-    const user = await this.userModel.findById(userId);
+  async sendToUser(payload: INotificationPayload) {
+    const user = await this.userModel.findById(payload.userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -84,9 +69,19 @@ export class NotificationService {
       };
     }
 
+    const notificationData: Record<string, string> = {
+      type: payload.type,
+      ...payload.data,
+    };
+
     const results = await Promise.allSettled(
       user.notificationTokens.map((token) =>
-        this.firebaseProvider.sendToToken(token, title, body),
+        this.firebaseProvider.sendToToken(
+          token,
+          payload.title,
+          payload.body,
+          notificationData,
+        ),
       ),
     );
 
